@@ -1,0 +1,217 @@
+#!/usr/bin/env bash
+### Script para configurar los accesos de las interfaces de red
+
+if [ -f /etc/gandalf/gandalf.conf ]; then
+  source /etc/gandalf/gandalf.conf
+fi
+
+# Habilitar puerto en interface para entrada: hab_in (eth0, 1) 
+
+hab_host() {
+  $IPTABLES_BIN -A INPUT -s $1 -j ACCEPT
+  $IPTABLES_BIN -A OUTPUT -d $1 -j ACCEPT
+  echo "Habilitando host $1 para todo"
+}
+
+deny_host() {
+  $IPTABLES_BIN -A INPUT -s $1 -j DROP
+  $IPTABLES_BIN -A OUTPUT -d $1 -j DROP
+  echo "Denegando host $1 para todo"
+}
+
+hab_in() {
+  $IPTABLES_BIN -A INPUT -p tcp -m tcp -i $1 --dport $2 -j ACCEPT
+  $IPTABLES_BIN -A OUTPUT -p tcp -m tcp -o $1 --sport $2 -m state --state RELATED,ESTABLISHED -j ACCEPT
+  echo "Habilitando puerto TCP de entrada $2 en la interface $1"
+}
+
+
+hab_out() {
+  $IPTABLES_BIN -A INPUT -i $1 -p tcp -m tcp --sport $2 -m state --state RELATED,ESTABLISHED -j ACCEPT
+  $IPTABLES_BIN -A OUTPUT -o $1 -p tcp -m tcp --dport $2 -j ACCEPT
+  echo "Habilitando puerto TCP de salida $2 en la interface $1"
+}
+
+
+hab_in_udp() {
+  $IPTABLES_BIN -A INPUT -p udp -m udp -i $1 --dport $2 -j ACCEPT
+  $IPTABLES_BIN -A OUTPUT -p udp -m udp -o $1 --sport $2 -m state --state RELATED,ESTABLISHED -j ACCEPT
+  echo "Habilitando puerto UDP de entrada $2 en la interface $1"
+}
+
+
+hab_out_udp() {
+  $IPTABLES_BIN -A INPUT -i $1 -p udp -m udp --sport $2 -j ACCEPT
+  $IPTABLES_BIN -A OUTPUT -o $1 -p udp -m udp --dport $2 -j ACCEPT
+  echo "Habilitando puerto UDP de salida $2 en la interface $1"
+}
+
+free_interface() {
+  $IPTABLES_BIN -A INPUT -i $1 -j ACCEPT
+  $IPTABLES_BIN -A OUTPUT -o $1 -j ACCEPT
+  echo "Libero interface $1"
+}
+
+## FLUSH IPTABLES
+
+flush_all() {
+  $IPTABLES_BIN -F
+  $IPTABLES_BIN -X
+  $IPTABLES_BIN -Z
+  $IPTABLES_BIN -t nat -F
+
+  $IPTABLES_BIN -P INPUT ACCEPT
+  $IPTABLES_BIN -P OUTPUT ACCEPT
+  $IPTABLES_BIN -P FORWARD ACCEPT
+
+}
+
+
+
+gandalf_start() {
+
+  ## Establecemos politica por defecto: DROP
+  $IPTABLES_BIN -P INPUT DROP
+  $IPTABLES_BIN -P OUTPUT DROP
+  $IPTABLES_BIN -P FORWARD DROP
+  
+  if [ $FREE_INTERFACES ]; then
+
+    for interface in $FREE_INTERFACES; do
+      free_interface $interface
+    done
+    
+  fi
+
+  # Ahora habilito puertos de entrada TPC
+
+  if [ -d /etc/gandalf/tcp-in ]; then
+    
+    interface=$(ls /etc/gandalf/tcp-in)
+
+    for interface in $interface; do
+      ports=$(cat /etc/gandalf/tcp-in/$interface)
+
+      for puerto in $ports; do
+	hab_in $interface $puerto
+      done
+
+    done
+
+  fi
+
+  # Ahora habilito puertos de salida TCP
+
+  if [ -d /etc/gandalf/tcp-out ]; then
+    
+    interface=$(ls /etc/gandalf/tcp-out)
+
+    for interface in $interface; do
+      ports=$(cat /etc/gandalf/tcp-out/$interface)
+
+      for puerto in $ports; do
+	hab_out $interface $puerto
+      done
+
+    done
+
+  fi
+
+
+  # Ahora habilito puertos de entrada UDP
+
+  if [ -d /etc/gandalf/udp-in ]; then
+    
+    interface=$(ls /etc/gandalf/udp-in)
+
+    for interface in $interface; do
+      ports=$(cat /etc/gandalf/udp-in/$interface)
+
+      for puerto in $ports; do
+	hab_in_udp $interface $puerto
+      done
+
+    done
+
+  fi
+
+  # Ahora habilito puertos de salida UDP
+
+  if [ -d /etc/gandalf/udp-out ]; then
+    
+    interface=$(ls /etc/gandalf/udp-out)
+
+    for interface in $interface; do
+      ports=$(cat /etc/gandalf/udp-out/$interface)
+
+      for puerto in $ports; do
+	hab_in_udp $interface $puerto
+      done
+
+    done
+
+  fi
+  
+  if [ $ALLOW_HOSTS ]; then
+
+    for hostn in $ALLOW_HOSTS; do
+      hab_host $hostn
+    done
+    
+  fi
+  
+  if [ $DENY_HOSTS ]; then
+
+    for hostn in $DENY_HOSTS; do
+      deny_host $hostn
+    done
+    
+  fi
+  
+  if [ -d /etc/gandalf/services-enabled ]; then
+    for f in $(ls /etc/gandalf/services-enabled); do
+      echo "Corriendo $f"
+      source /etc/gandalf/services-enabled/$f
+    done
+  fi
+  
+
+}
+
+case "$1" in
+  start)
+        echo "Starting Gandalf"
+        flush_all
+        gandalf_start
+        ;;
+  stop)
+        echo "Flushing all interfaces"
+        flush_all
+        ;;
+  restart|force-reload)
+	echo "Reload rulez"
+        flush_all
+        gandalf_start
+        ;;
+  reload)
+        echo "Reload rulez"
+        flush_all
+        gandalf_start
+        ;;
+  test)
+	echo "Testing, recuerde que al finalizar los 30 segundos se borraran TODAS las reglas de iptables"
+	flush_all
+	gandalf_start
+	sleep 30
+	flush_all
+	;;
+  status)
+        $IPTABLES_BIN -L
+        ;;
+  *)
+        echo "Usage: $NAME {start|stop|reload|status}" >&2
+        exit 1
+        ;;
+esac
+
+exit 0
