@@ -50,7 +50,7 @@ PROBANDO LA CONFIGURACION DESDE MAQUINA REMOTA
 
 Estas instalando gandalf en un servidor remoto por SSH y te equivocaste de interface! te olvidaste de habilitar el puerto 22!!! o no!! hard reset, chau uptime, servicio caido!! mi jefe se entera!!!
 
-No alarmes!
+No  te alarmes!
 
 Para probar la configuracion en este caso, el script puede recibir una orden "test" que aplicara las reglas a iptables pero 30 segundos después las borrará, esto sirve para probar la configuracion "on-line" y si falla algo y no se puede volver a acceder al equipo, solo hay que contarle un chiste de 30 segundos a tu jefe para que no haga F5 y vea que su web no anda, luego podras acceder y arreglar el problema.
 
