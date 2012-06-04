@@ -77,7 +77,7 @@ gandalf_start() {
   
   if [ $FREE_INTERFACES ]; then
 
-    for interface in $FREE_INTERFACES; do
+    for interface in ${FREE_INTERFACES[*]}; do
       free_interface $interface
     done
     
@@ -154,7 +154,7 @@ gandalf_start() {
   
   if [ $ALLOW_HOSTS ]; then
 
-    for hostn in $ALLOW_HOSTS; do
+    for hostn in ${ALLOW_HOSTS[*]}; do
       hab_host $hostn
     done
     
@@ -162,7 +162,7 @@ gandalf_start() {
   
   if [ $DENY_HOSTS ]; then
 
-    for hostn in $DENY_HOSTS; do
+    for hostn in ${DENY_HOSTS[*]}; do
       deny_host $hostn
     done
     
