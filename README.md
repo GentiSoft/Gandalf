@@ -1,13 +1,13 @@
 
-[![You shall not pass](http://indebtfatshortbadteeth.files.wordpress.com/2012/04/you-shall-not-pass1.jpg)]
+![You shall not pass](http://indebtfatshortbadteeth.files.wordpress.com/2012/04/you-shall-not-pass1.jpg)
 
 Gandalf es un script en bash que se puede usar en el inicio del sistema, copiandolo a los rc o init (depende la distribución de linux), este redefine según archivos de configuración y algunos servicios.
 
-INSTALACION:
+# INSTALACION:
 
 Hay 2 directorios, rc-file y etc, el contenido de etc tiene que ser copiado a /etc (el directorio con los archivos e configuración debe quedar /etc/gandalf), y el archivo "gandalf" dentro de rc-file tiene que ser copiado a /etc/rc.d o /etc/init.d, dependiendo de la distribución, luego se debera habilitar como servicio asi en el arranque del sistema se ejecutará, y se podra "stopear" o limpiar las reglas asi como modificar la configuracion y releer las reglas.
 
-# DEBIAN
+## DEBIAN
 
 Luego de copiar etc/gandalf a /etc se debera copiar el archivo rc-file/gandalf a /etc/init.d
 
@@ -27,7 +27,7 @@ y para correrlo la primera vez:
 /etc/init.d/gandalf start
 ```
 
-# ARCHLINUX
+## ARCHLINUX
 
 En Archlinux después de copiar el directorio de configuracion a /etc, se debe copiar rc-file gandalf a /etc/rc.d
 
@@ -56,11 +56,11 @@ Luego existen los directorios /etc/gandalf/services-available y /etc/gandalf/ser
 Que contendra scripts que habiliten ciertos servicios, en el directorio available iran todos estos scripts, en el que al principio se podran definir las interfaces a usar, en el enabled habran links sinbolicos a estos, los que esten linkeados en enableds correran.
 
 
-# PROBANDO LA CONFIGURACION DESDE MAQUINA REMOTA
+## PROBANDO LA CONFIGURACION DESDE MAQUINA REMOTA
 
 Estas instalando gandalf en un servidor remoto por SSH y te equivocaste de interface! te olvidaste de habilitar el puerto 22!!! o no!! hard reset, chau uptime, servicio caido!! mi jefe se entera!!!
 
-## No  te alarmes!
+**No  te alarmes!**
 
 Para probar la configuracion en este caso, el script puede recibir una orden "test" que aplicara las reglas a iptables pero 30 segundos después las borrará, esto sirve para probar la configuracion "on-line" y si falla algo y no se puede volver a acceder al equipo, solo hay que contarle un chiste de 30 segundos a tu jefe para que no haga F5 y vea que su web no anda, luego podras acceder y arreglar el problema.
 
